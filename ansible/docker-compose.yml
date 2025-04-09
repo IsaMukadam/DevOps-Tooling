@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  ansible:
+    image: ubuntu:latest
+    container_name: ansible_container
+    build: 
+      context: ./ansible
+    volumes:
+      - ./ansible:/ansible
+      - /var/run/docker.sock:/var/run/docker.sock  # To allow Ansible to manage Docker
+    depends_on:
+      - target
+
+  target:
+    image: ubuntu:latest
+    container_name: target_container
+    command: sleep infinity  # Keep container running for testing
+    expose:
+      - "80"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

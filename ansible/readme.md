@@ -1,11 +1,17 @@
 # Ansible
 
-## 1 - Bringing up an Ansible server locally
+(1) Provisioning servers (automating server setup, including cloud resources).
 
+(2) Configuration management (ensuring consistent system configurations).
 
-## 2 - Bringing up an Ansible server on AWS
+(3) Application deployment (automating app deployment and updates).
 
+(4) Orchestration (coordinating tasks across multiple systems).
 
-## 3 - Working with Ansible to achieve some configuration management of linux servers
+(5) Security and compliance automation (automating security configurations and audits).
+
+## 1 - Running Ansible locally
+
+## 2 - Utilising Ansible on AWS to do configuration of multiple linux servers
 
     - Key topics to be put here for what has been done.

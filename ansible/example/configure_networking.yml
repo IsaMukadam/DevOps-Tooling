@@ -1,0 +1,18 @@
+---
+- name: Configure networking between containers
+  hosts: frontend_container
+  become: yes
+  tasks:
+    - name: Ensure the frontend container is connected to the backend container network
+      docker_network:
+        name: backend_network
+        state: present
+
+    - name: Start the frontend container with network configuration
+      docker_container:
+        name: frontend
+        image: nginx
+        state: started
+        restart_policy: always
+        networks:
+          - backend_network

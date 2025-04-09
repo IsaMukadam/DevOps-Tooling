@@ -1,0 +1,24 @@
+---
+- name: Deploy application to appropriate containers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Deploy Flask app to backend container
+      when: inventory_hostname == "backend_container"
+      copy:
+        src: /path/to/your/flask/app
+        dest: /home/youruser/app
+        mode: 0755
+
+    - name: Copy nginx configuration to frontend container
+      when: inventory_hostname == "frontend_container"
+      copy:
+        src: /path/to/your/nginx.conf
+        dest: /etc/nginx/nginx.conf
+        mode: 0644
+
+    - name: Reload nginx configuration on frontend container
+      when: inventory_hostname == "frontend_container"
+      service:
+        name: nginx
+        state: reloaded

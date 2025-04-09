@@ -1,0 +1,40 @@
+---
+- name: Start/Stop Containers and Configure Services
+  hosts: all
+  become: yes
+  tasks:
+    - name: Start nginx service on frontend container
+      when: inventory_hostname == "frontend_container"
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Start backend app in Docker container
+      when: inventory_hostname == "backend_container"
+      docker_container:
+        name: backend_app
+        image: your-backend-image
+        state: started
+        restart_policy: always
+        networks:
+          - backend_network
+
+    - name: Ensure backend container is running
+      when: inventory_hostname == "backend_container"
+      docker_container:
+        name: backend_app
+        state: started
+        restart_policy: always
+
+    - name: Stop the frontend container
+      when: inventory_hostname == "frontend_container" and stop_container | bool
+      docker_container:
+        name: frontend
+        state: stopped
+
+    - name: Stop the backend container
+      when: inventory_hostname == "backend_container" and stop_container | bool
+      docker_container:
+        name: backend_app
+        state: stopped
