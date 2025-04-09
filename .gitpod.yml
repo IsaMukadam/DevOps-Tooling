@@ -1,0 +1,30 @@
+tasks:
+  - name: cdk
+    before: |
+      ./bin/aws_cdk_install.sh
+  # install terraform - https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
+  - name: terraform
+    before: |
+      ./bin/terraform_cli_install.sh
+  # powershell install - https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
+  # https://docs.aws.amazon.com/powershell/latest/userguide/pstools-getting-set-up-linux-mac.html
+  # aws documentation for powershell - https://docs.aws.amazon.com/powershell/
+  - name: powershell
+    before: |
+      ./bin/powershell_cli_install.sh
+  #https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+  - name: Install AWS CLI
+    env:
+      AWS_CLI_AUTO_PROMPT: on-partial
+    before: |
+      ./bin/aws_cli_install.sh
+    command: aws --version
+  # Python & Boto3 Install for AWS SDK
+  - name: python and boto3
+    before: |
+      sudo apt-get update
+      sudo apt-get install python3-pip
+      pip3 install boto3
+  # Random utils
+  - name: Utils
+    before: sudo apt-get install tree
