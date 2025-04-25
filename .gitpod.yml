@@ -1,52 +1,53 @@
-image:
-  file: .gitpod.Dockerfile
+# image:
+#   file: .gitpod.Dockerfile
 
 tasks:
-  # Installing Ansible locally
-  - name: ansible
+  #   # Installing Ansible locally
+  #   - name: ansible
+  #     before: |
+  #       ./ansible/ansible_install.sh
+
+  #   # Starting Docker within the Gitpod with specified docker compose file
+  #   - name: Start Docker Compose
+  #     command: |
+  #       docker --version
+  #       docker-compose --version
+  #       ./ansible/docker compose up -d
+
+  ##################### Extras to be used as and when needed ###############################
+
+  # - name: cdk
+  #   before: |
+  #     ./bin/aws_cdk_install.sh
+
+  # install terraform - https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
+  - name: terraform
     before: |
-      ./ansible/ansible_install.sh
+      ./bin/terraform_cli_install.sh
 
-  # Starting Docker within the Gitpod with specified docker compose file
-  - name: Start Docker Compose
-    command: |
-      docker --version
-      docker-compose --version
-      ./ansible/docker compose up -d
+  # powershell install - https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
+  # https://docs.aws.amazon.com/powershell/latest/userguide/pstools-getting-set-up-linux-mac.html
+  # aws documentation for powershell - https://docs.aws.amazon.com/powershell/
+  # - name: powershell
+  #   before: |
+  #     ./bin/powershell_cli_install.sh
+  # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 
-##################### Extras to be used as and when needed ###############################
+  - name: Install AWS CLI
+    env:
+      AWS_CLI_AUTO_PROMPT: on-partial
+    before: |
+      ./bin/aws_cli_install.sh
+    command: aws --version
 
-# - name: cdk
-#   before: |
-#     ./bin/aws_cdk_install.sh
-# install terraform - https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
-# - name: terraform
-#   before: |
-#     ./bin/terraform_cli_install.sh
+  # Python & Boto3 Install for AWS SDK
+  # - name: python and boto3
+  #   before: |
+  #     sudo apt-get update
+  #     sudo apt-get install python3-pip
+  #     pip3 install boto3
 
-# powershell install - https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
-# https://docs.aws.amazon.com/powershell/latest/userguide/pstools-getting-set-up-linux-mac.html
-# aws documentation for powershell - https://docs.aws.amazon.com/powershell/
-# - name: powershell
-#   before: |
-#     ./bin/powershell_cli_install.sh
-# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-
-# - name: Install AWS CLI
-#   env:
-#     AWS_CLI_AUTO_PROMPT: on-partial
-#   before: |
-#     ./bin/aws_cli_install.sh
-#   command: aws --version
-
-# Python & Boto3 Install for AWS SDK
-# - name: python and boto3
-#   before: |
-#     sudo apt-get update
-#     sudo apt-get install python3-pip
-#     pip3 install boto3
-
-# # Random utils
-# - name: Utils
-#   before:
-#     sudo apt-get install tree
+  # # Random utils
+  # - name: Utils
+  #   before:
+  #     sudo apt-get install tree
