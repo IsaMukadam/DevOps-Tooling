@@ -4,6 +4,7 @@ provider "aws" {
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "jira-terraform-state-learning"
+  force_destroy = true  // Added to allow deletion of non-empty bucket
 
   # Prevent accidental deletion of this S3 bucket
   lifecycle {
