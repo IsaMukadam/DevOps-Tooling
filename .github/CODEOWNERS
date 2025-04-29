@@ -1,4 +1,8 @@
 # This file defines code ownership rules
 
-# .gitignore file can only be modified by specified user
+# Require approval for all changes in the repository
+* @IsaMukadam
+
+# Specific file ownership
 /.gitignore @IsaMukadam
+/.github/ @IsaMukadam
