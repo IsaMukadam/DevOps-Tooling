@@ -1,0 +1,4 @@
+# This file defines code ownership rules
+
+# .gitignore file can only be modified by specified user
+/.gitignore @Isa_M
