@@ -48,6 +48,33 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Private Subnet for RDS
+resource "aws_subnet" "private_1" {
+  vpc_id            = aws_vpc.jira_vpc.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 2)
+  availability_zone = "${var.aws_region}a"
+
+  tags = {
+    Name        = "jira-private-subnet-1"
+    Environment = "learning"
+    Purpose     = "testing"
+    AutoDelete  = "true"
+  }
+}
+
+resource "aws_subnet" "private_2" {
+  vpc_id            = aws_vpc.jira_vpc.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 3)
+  availability_zone = "${var.aws_region}b"
+
+  tags = {
+    Name        = "jira-private-subnet-2"
+    Environment = "learning"
+    Purpose     = "testing"
+    AutoDelete  = "true"
+  }
+}
+
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.jira_vpc.id
@@ -124,10 +151,10 @@ resource "aws_security_group" "jira" {
   }
 }
 
-# Security Group for PostgreSQL
-resource "aws_security_group" "postgres" {
-  name        = "postgres-security-group"
-  description = "Security group for PostgreSQL Database"
+# Security Group for RDS
+resource "aws_security_group" "rds" {
+  name        = "rds-security-group"
+  description = "Security group for RDS PostgreSQL"
   vpc_id      = aws_vpc.jira_vpc.id
 
   ingress {
@@ -137,45 +164,57 @@ resource "aws_security_group" "postgres" {
     security_groups = [aws_security_group.jira.id]
   }
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = {
-    Name        = "postgres-sg"
+    Name        = "rds-sg"
     Environment = "learning"
     Purpose     = "testing"
     AutoDelete  = "true"
   }
 }
 
-# EC2 Instance
-data "aws_ami" "ubuntu" {
-  most_recent = true
+# RDS Subnet Group
+resource "aws_db_subnet_group" "jira" {
+  name        = "jira-db-subnet-group"
+  description = "Subnet group for Jira RDS"
+  subnet_ids  = [aws_subnet.private_1.id, aws_subnet.private_2.id]
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  tags = {
+    Name        = "jira-db-subnet-group"
+    Environment = "learning"
+    Purpose     = "testing"
+    AutoDelete  = "true"
   }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
 }
 
+# RDS Instance
+resource "aws_db_instance" "postgres" {
+  identifier           = "jira-postgres"
+  engine              = "postgres"
+  engine_version      = "14"
+  instance_class      = "db.t3.micro"
+  allocated_storage   = 20
+  storage_type        = "gp2"
+  db_name             = "jiradb"
+  username            = "jira"
+  password            = var.db_password
+  skip_final_snapshot = true
+
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name   = aws_db_subnet_group.jira.name
+
+  backup_retention_period = 7
+  multi_az               = false
+  publicly_accessible    = false
+
+  tags = {
+    Name        = "jira-rds"
+    Environment = "learning"
+    Purpose     = "testing"
+    AutoDelete  = "true"
+  }
+}
+
+# EC2 Instance for Jira
 resource "aws_instance" "jira" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -186,7 +225,7 @@ resource "aws_instance" "jira" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_size = 30
+    volume_size = 8  # Free tier limit is 30GB total across all volumes
     volume_type = "gp2"
   }
 
@@ -201,12 +240,12 @@ resource "aws_instance" "jira" {
               systemctl start docker
               systemctl enable docker
 
-              echo "Waiting for PostgreSQL to be ready..."
-              until PGPASSWORD="${var.db_password}" psql -h ${aws_instance.postgres.private_ip} -U jira -d jiradb -c '\q' 2>/dev/null; do
-                echo "PostgreSQL is unavailable - sleeping 5s"
+              echo "Waiting for RDS to be ready..."
+              until PGPASSWORD="${var.db_password}" psql -h ${aws_db_instance.postgres.endpoint} -U jira -d jiradb -c '\q' 2>/dev/null; do
+                echo "RDS is unavailable - sleeping 30s"
                 sleep 30
               done
-              echo "PostgreSQL is ready!"
+              echo "RDS is ready!"
 
               # Create docker-compose directory
               mkdir -p /opt/jira
@@ -220,65 +259,12 @@ resource "aws_instance" "jira" {
               cat > /opt/jira/.env << EOL
               JIRA_ADMIN_PASSWORD=${var.jira_admin_password}
               DB_PASSWORD=${var.db_password}
-              POSTGRES_HOST=${aws_instance.postgres.private_ip}
+              POSTGRES_HOST=${aws_db_instance.postgres.endpoint}
               EOL
 
               # Start Jira using docker-compose
               cd /opt/jira
               docker-compose up -d
-              EOF
-
-  metadata_options {
-    http_endpoint               = "enabled"  # Enable the instance metadata service
-    http_tokens                 = "required" # Enforce IMDSv2
-    http_put_response_hop_limit = 1          # Restrict token usage to immediate network
-    instance_metadata_tags      = "disabled" # Additional security measure
-  }
-
-  tags = {
-    Name        = "jira-server"
-    Environment = "learning"
-    Purpose     = "testing"
-    AutoDelete  = "true"
-  }
-}
-
-# EC2 Instance for PostgreSQL
-resource "aws_instance" "postgres" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
-  key_name      = var.key_name
-
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.postgres.id]
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_size = 30
-    volume_type = "gp2"
-  }
-
-  user_data = <<-EOF
-              #!/bin/bash
-              apt-get update
-              apt-get install -y postgresql postgresql-contrib
-
-              # Configure PostgreSQL to accept connections
-              sudo -u postgres bash -c "psql -c \"ALTER USER postgres PASSWORD '${var.db_password}';\""
-              
-              # Update PostgreSQL configuration
-              echo "listen_addresses = '*'" >> /etc/postgresql/12/main/postgresql.conf
-              echo "host all all ${aws_subnet.public.cidr_block} md5" >> /etc/postgresql/12/main/pg_hba.conf
-              
-              # Create Jira database and user
-              sudo -u postgres bash -c "psql -c \"CREATE DATABASE jiradb;\""
-              sudo -u postgres bash -c "psql -c \"CREATE USER jira WITH PASSWORD '${var.db_password}';\""
-              sudo -u postgres bash -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE jiradb TO jira;\""
-              
-              
-
-              # Restart PostgreSQL
-              systemctl restart postgresql
               EOF
 
   metadata_options {
@@ -289,7 +275,7 @@ resource "aws_instance" "postgres" {
   }
 
   tags = {
-    Name        = "postgres-server"
+    Name        = "jira-server"
     Environment = "learning"
     Purpose     = "testing"
     AutoDelete  = "true"

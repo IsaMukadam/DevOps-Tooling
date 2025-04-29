@@ -1,29 +1,20 @@
 output "jira_public_ip" {
-  description = "Public IP address of the Jira server"
+  description = "Public IP address of the Jira EC2 instance"
   value       = aws_instance.jira.public_ip
 }
 
-output "jira_url" {
-  description = "URL to access Jira"
-  value       = "http://${aws_instance.jira.public_ip}"
+output "jira_dns" {
+  description = "Public DNS name of the Jira EC2 instance"
+  value       = aws_instance.jira.public_dns
 }
 
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = aws_vpc.jira_vpc.id
+output "rds_endpoint" {
+  description = "RDS PostgreSQL endpoint"
+  value       = aws_db_instance.postgres.endpoint
 }
 
-output "security_group_id" {
-  description = "ID of the security group"
-  value       = aws_security_group.jira.id
-}
-
-output "postgres_private_ip" {
-  description = "Private IP of PostgreSQL instance"
-  value       = aws_instance.postgres.private_ip
-}
-
-output "postgres_public_ip" {
-  description = "Public IP of PostgreSQL instance"
-  value       = aws_instance.postgres.public_ip
+output "db_connection_string" {
+  description = "Database connection string"
+  value       = "postgres://jira@${aws_db_instance.postgres.endpoint}/jiradb"
+  sensitive   = true
 }
