@@ -5,4 +5,5 @@
 
 # Specific file ownership
 /.gitignore @IsaMukadam
+/docker-compose*.yml @IsaMukadam
 /.github/ @IsaMukadam
