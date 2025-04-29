@@ -1,43 +1,57 @@
-# Local Jira Server Setup
+# Local Jira Setup
 
-This setup includes Jira Server and PostgreSQL database running in Docker containers.
+This directory contains Docker Compose configurations for running Jira with PostgreSQL locally.
 
-## Prerequisites
+## Configurations
 
-- Docker and Docker Compose installed on your system
-- At least 4GB of RAM available for Jira
+Three different deployment options are available:
 
-## Getting Started
+### 1. Docker Volume Mount (`docker-compose-docker-volume.yml`)
+- Uses Docker named volumes
+- Data persists across container restarts
+- Volumes managed by Docker
 
-1. Start the containers:
-   ```bash
-   docker-compose up -d
-   ```
+### 2. Local Directory Mount (`docker-compose-local-mount.yml`)
+- Mounts local directories for data
+- Easy access to data files
+- Data stored in `./data/{jira,postgres}`
 
-2. Access Jira:
-   - Open your browser and navigate to `http://localhost:8080`
-   - Follow the setup wizard
-   - When configuring the database:
-     - Choose "PostgreSQL"
-     - Database URL: jdbc:postgresql://postgres:5432/jiradb
-     - Username: jira
-     - Password: jirapass
+### 3. Enhanced Configuration (`docker-compose-local-enhanced.yml`)
+- Includes health checks
+- Memory limits configured
+- Network isolation
+- Optimized PostgreSQL settings
+- Automatic container restart
 
-## Notes
+## Quick Start
 
-- Initial startup may take a few minutes
-- Data is persisted in Docker volumes:
-  - `jira_data`: Jira application data
-  - `postgres_data`: PostgreSQL database data
-
-## Stopping the Services
-
-To stop the containers:
+1. Choose your preferred configuration:
 ```bash
-docker-compose down
+docker-compose -f <config-file>.yml up -d
 ```
 
-To stop and remove all data (volumes):
-```bash
-docker-compose down -v
-```
+2. Access Jira at: http://localhost:8080
+
+## Database Configuration
+
+PostgreSQL settings:
+- Database: jiradb
+- Username: jira
+- Password: jirapass
+- Host: postgres
+- Port: 5432
+
+## Resource Allocation
+
+### Jira
+- Memory Limit: 4GB
+- Memory Reservation: 2GB
+
+### PostgreSQL
+- Memory Limit: 2GB
+- Memory Reservation: 1GB
+
+## Data Persistence
+Data is stored either in Docker volumes or local directories depending on the chosen configuration:
+- Docker volumes: `jira_data` and `postgres_data`
+- Local directories: `./data/jira` and `./data/postgres`
