@@ -10,26 +10,23 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "instance_type" {
-  description = "EC2 instance type"
+variable "allowed_cidr" {
+  description = "CIDR block allowed to connect via SSH"
   type        = string
-  default     = "t2.micro"  # Free tier eligible
 }
 
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
-  sensitive   = true
 }
 
-variable "db_password" {
-  description = "Password for RDS PostgreSQL database"
+variable "postgres_host" {
+  description = "PostgreSQL RDS endpoint"
   type        = string
-  sensitive   = true
 }
 
-variable "jira_admin_password" {
-  description = "Password for Jira admin user"
+variable "grafana_password" {
+  description = "Password for Grafana admin user"
   type        = string
   sensitive   = true
 }
